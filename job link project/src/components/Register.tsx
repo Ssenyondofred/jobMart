@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 
 const API_URL = "http://localhost:5000"; // Flask backend URL
 
-// Theme colors (forest green palette)
 const theme = {
   forestGreen: "#228B22",
   darkGreen: "#006400",
@@ -96,10 +95,16 @@ const CandidateRegister = () => {
   const [portfolio, setPortfolio] = useState("");
   const [resume, setResume] = useState<File | null>(null);
   const [certificates, setCertificates] = useState<File[]>([]);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -111,8 +116,10 @@ const CandidateRegister = () => {
       formData.append("applied_jobs", appliedJobs);
       formData.append("education", education);
       formData.append("portfolio", portfolio);
+      formData.append("password", password);
       if (resume) formData.append("resume", resume);
       certificates.forEach((file) => formData.append("certificates", file));
+
       const res = await fetch(`${API_URL}/register/candidate`, {
         method: "POST",
         body: formData,
@@ -147,6 +154,8 @@ const CandidateRegister = () => {
         <InputField label="Highest Education" value={education} onChange={setEducation} placeholder="Bachelor’s in CS" />
         <InputField label="Applied Jobs" value={appliedJobs} onChange={setAppliedJobs} placeholder="Frontend Developer, UI Designer" gridSpan={2} />
         <InputField label="Portfolio / GitHub Link" value={portfolio} onChange={setPortfolio} placeholder="https://github.com/johndoe" gridSpan={2} />
+        <InputField label="Password" value={password} onChange={setPassword} placeholder="Enter password" type="password" />
+        <InputField label="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Confirm password" type="password" />
         <FileInput label="Upload Resume" file={resume} setFile={setResume} />
         <MultiFileInput label="Certificates" files={certificates} setFiles={setCertificates} />
       </div>
@@ -197,17 +206,23 @@ const EmployerRegister = () => {
   const [email, setEmail] = useState("");
   const [industry, setIndustry] = useState("");
   const [jobOpenings, setJobOpenings] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
     setLoading(true);
 
     try {
       const res = await fetch(`${API_URL}/register/employer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyName, email, industry, jobOpenings }),
+        body: JSON.stringify({ companyName, email, industry, jobOpenings, password }),
       });
 
       if (res.ok) {
@@ -236,6 +251,8 @@ const EmployerRegister = () => {
         <InputField label="Email" value={email} onChange={setEmail} placeholder="hr@techcorp.com" />
         <InputField label="Industry" value={industry} onChange={setIndustry} placeholder="Software, Finance, Healthcare" />
         <InputField label="Job Openings" value={jobOpenings} onChange={setJobOpenings} placeholder="Backend Developer, Data Analyst" />
+        <InputField label="Password" value={password} onChange={setPassword} placeholder="Enter password" type="password" />
+        <InputField label="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Confirm password" type="password" />
       </div>
 
       <button
@@ -278,11 +295,11 @@ const EmployerRegister = () => {
 // ==========================
 // Input Components
 // ==========================
-const InputField = ({ label, value, onChange, placeholder, gridSpan }: any) => (
+const InputField = ({ label, value, onChange, placeholder, gridSpan, type = "text" }: any) => (
   <div style={{ gridColumn: gridSpan ? `span ${gridSpan}` : undefined }}>
     <label style={{ fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.25rem", display: "block", color: theme.textDark }}>{label}</label>
     <input
-      type="text"
+      type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
