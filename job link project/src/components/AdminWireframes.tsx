@@ -50,7 +50,25 @@ export function AdminWireframes({ currentView }: { currentView: string }) {
       navigate("/login");
     }
   }, [navigate]);
+useEffect(() => {
+  // Function to check window width and set sidebar accordingly
+  const handleResize = () => {
+    if (window.innerWidth < 768) { // Small screens: collapse
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+    }
+  };
 
+  // Initial check
+  handleResize();
+
+  // Listen to resize events
+  window.addEventListener("resize", handleResize);
+
+  // Cleanup
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
   // Dummy Stats
   const dummyStats = [
     { label: "Total Job Seekers", value: "12,543", icon: Users },
@@ -99,7 +117,7 @@ export function AdminWireframes({ currentView }: { currentView: string }) {
 
   const Sidebar = () => (
     <div
-      className={`fixed top-0 left-0 h-full bg-gray-900 text-white shadow-lg transition-all duration-300 z-50
+      className={`fixed top-0 left-0 h-full bg-gray-900 text-black shadow-lg transition-all duration-300 z-50
       ${sidebarOpen ? "w-64" : "w-16"}`}
     >
       <div className="flex items-center justify-between p-4">

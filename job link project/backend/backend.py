@@ -5,8 +5,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
 from dotenv import load_dotenv
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
@@ -16,6 +18,43 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
+SENDER_EMAIL = "jonathanswift781@gmail.com"
+SENDER_PASSWORD = "paos rtqr pbez faow"  # From Google App Passwords
+
+@app.route("/send_referee_emails", methods=["POST"])
+def send_referee_emails():
+    data = request.get_json()
+    applicant_name = data.get("applicant_name")
+    referees = data.get("referees", []) 
+    
+    subject = f"Referee Notification - {applicant_name}'s Application"
+    
+    for email in referees:
+        msg = MIMEMultipart("alternative")
+        msg["From"] = SENDER_EMAIL
+        msg["To"] = email
+        msg["Subject"] = subject
+        
+        body = f"""
+        <p>Dear Referee,</p>
+        <p>{applicant_name} has listed you as a referee in their job application.</p>
+        <p>Please expect a follow-up or verification request soon.</p>
+        <br>
+        <p>Thank you,</p>
+        <p><strong>JobMart Application System</strong></p>
+        """
+        msg.attach(MIMEText(body, "html"))
+        
+        try:
+            with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                server.starttls()
+                server.login(SENDER_EMAIL, SENDER_PASSWORD)
+                server.send_message(msg)
+            print(f"✅ Email sent to {email}")
+        except Exception as e:
+            print(f"❌ Failed to send to {email}: {e}")
+    
+    return jsonify({"status": "Emails sent!"})
 
 # ------------------ Candidate Registration ------------------
 @app.route("/register/candidate", methods=["POST"])
@@ -171,30 +210,76 @@ def create_application():
         email = payload.get("email")
         job_id = payload.get("job_id")
         cover_letter = payload.get("cover_letter")
+        referees = payload.get("referees", [])
 
         if not email or not job_id or not cover_letter:
             return jsonify({"error": "email, job_id, and cover_letter are required"}), 400
 
+        # Check if candidate exists
         candidate_resp = supabase.table("users").select("*").eq("email", email).eq("role", "candidate").execute()
         if not candidate_resp.data or len(candidate_resp.data) == 0:
             return jsonify({"error": "Candidate does not exist"}), 400
 
         candidate_id = candidate_resp.data[0]["id"]
 
+        # Insert new application with referees JSONB
         app_payload = {
             "candidate_id": candidate_id,
             "job_id": job_id,
-            "status": payload.get("status", "Applied"),  # Must match check constraint
-            "cover_letter": cover_letter
+            "status": payload.get("status", "Applied"),
+            "cover_letter": cover_letter,
+            "referees": referees  # <--- store referees JSON here
         }
 
         application_resp = supabase.table("applications").insert(app_payload).execute()
+
+        # Notify referees via email (optional)
+        for ref in referees:
+            try:
+                send_referee_email(
+                    ref_name=ref.get("name"),
+                    ref_email=ref.get("email"),
+                    candidate_email=email,
+                    job_id=job_id
+                )
+            except Exception as mail_err:
+                print("⚠️ Failed to send referee email:", mail_err)
+
         return jsonify(application_resp.data), 201
 
     except Exception as e:
         import traceback
         print("❌ Error in /applications POST:", traceback.format_exc())
         return jsonify({"error": str(e)}), 500
+
+
+# 📧 Email function (simple Gmail SMTP version)
+def send_referee_email(ref_name, ref_email, candidate_email, job_id):
+    import smtplib
+    from email.mime.text import MIMEText
+
+    subject = "Referee Notification"
+    body = f"""
+    Hello {ref_name},
+
+    You have been listed as a referee by  {candidate_email} for a job application (Job ID: {job_id}).
+
+    Kindly be prepared in case the employer contacts you for verification.
+
+    Best regards,  
+    JobMart Team
+    """
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = "noreply@jobconnect.com"
+    msg["To"] = ref_email
+
+    # Example Gmail SMTP setup (replace with your credentials)
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.starttls()
+        server.login("jonathanswift781@gmail.com", "crlm jmwq vrmc olsr")
+        server.sendmail(msg["From"], [msg["To"]], msg.as_string())
 
 # ------------------ Approve Application ------------------
 @app.route("/applications/<app_id>/approve", methods=["POST"])

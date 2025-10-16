@@ -104,6 +104,25 @@ export function EmployerWireframes({ currentView }: { currentView: string }) {
       setLoading(false);
     }
   };
+useEffect(() => {
+  // Function to check window width and set sidebar accordingly
+  const handleResize = () => {
+    if (window.innerWidth < 768) { // Small screens: collapse
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+    }
+  };
+
+  // Initial check
+  handleResize();
+
+  // Listen to resize events
+  window.addEventListener("resize", handleResize);
+
+  // Cleanup
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
 
   useEffect(() => {
     fetchData();
@@ -120,28 +139,93 @@ export function EmployerWireframes({ currentView }: { currentView: string }) {
   ];
 
   const Sidebar = () => (
-    <div className={`fixed top-0 left-0 h-full bg-gray-900 text-white shadow-lg transition-all duration-300 z-50 ${sidebarOpen ? "w-64" : "w-16"}`}>
-      <div className="flex items-center justify-between p-4">
-        <span className={`font-bold text-lg transition-opacity ${sidebarOpen ? "opacity-100" : "opacity-0"}`}>Employer</span>
-        <button onClick={() => setSidebarOpen(!sidebarOpen)}>
-          {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </div>
-      <nav className="mt-6 flex flex-col space-y-2">
-        {navItems.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveView(key)}
-            title={!sidebarOpen ? label : undefined}
-            className={`flex items-center gap-3 px-4 py-2 text-sm font-medium transition-colors ${activeView === key ? "bg-green-600" : "hover:bg-gray-700"}`}
-          >
-            <Icon className="h-5 w-5" />
-            {sidebarOpen && <span>{label}</span>}
-          </button>
-        ))}
-      </nav>
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      height: "100vh",
+      width: sidebarOpen ? "16rem" : "4rem",
+      background: "rgba(30, 41, 59, 0.7)", // semi-transparent dark
+      backdropFilter: "blur(10px)", // glass effect
+      WebkitBackdropFilter: "blur(10px)", // for Safari
+      color: "#fff",
+      boxShadow: "2px 0 12px rgba(0,0,0,0.4)",
+      transition: "all 0.3s ease",
+      zIndex: 50,
+      overflow: "hidden",
+      borderRight: "1px solid rgba(255,255,255,0.1)",
+      borderRadius: "0 12px 12px 0",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "1rem",
+        borderBottom: "1px solid rgba(255,255,255,0.1)",
+      }}
+    >
+      <span
+        style={{
+          fontWeight: "bold",
+          fontSize: "1.125rem",
+          opacity: sidebarOpen ? 1 : 0,
+          transition: "opacity 0.3s ease",
+        }}
+      >
+        Employer
+      </span>
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        style={{
+          background: "none",
+          border: "none",
+          color: "#d1d5db",
+          cursor: "pointer",
+          transition: "color 0.2s ease",
+        }}
+        onMouseOver={(e) => (e.currentTarget.style.color = "#22c55e")}
+        onMouseOut={(e) => (e.currentTarget.style.color = "#d1d5db")}
+      >
+        {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+      </button>
     </div>
-  );
+
+    <nav style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+      {navItems.map(({ key, label, icon: Icon }) => (
+        <button
+          key={key}
+          onClick={() => setActiveView(key)}
+          title={!sidebarOpen ? label : undefined}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            padding: "0.75rem 1rem",
+            fontSize: "0.875rem",
+            fontWeight: 500,
+            background: activeView === key ? "rgba(34,197,94,0.2)" : "transparent",
+            borderLeft: activeView === key ? "4px solid #22c55e" : "4px solid transparent",
+            color: activeView === key ? "#22c55e" : "#d1d5db",
+            cursor: "pointer",
+            transition: "all 0.25s ease",
+            borderRadius: "0 8px 8px 0",
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.1)")}
+          onMouseOut={(e) =>
+            (e.currentTarget.style.background =
+              activeView === key ? "rgba(34,197,94,0.2)" : "transparent")
+          }
+        >
+          <Icon className="h-5 w-5" />
+          {sidebarOpen && <span>{label}</span>}
+        </button>
+      ))}
+    </nav>
+  </div>
+);
 
   // --- Approve / Reject Functions ---
   const handleApprove = async (appId: string) => {

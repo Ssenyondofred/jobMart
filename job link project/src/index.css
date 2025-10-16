@@ -1090,6 +1090,9 @@
   .text-white {
     color: var(--color-white);
   }
+  .text-black{
+    color:#030213;
+  }
 
   .capitalize {
     text-transform: capitalize;
