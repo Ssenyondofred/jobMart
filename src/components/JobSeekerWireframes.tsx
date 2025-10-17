@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { Button } from "../components/ui/button"
-import { Input } from "../components/ui/input"
-import { Badge } from "../components/ui/badge"
-import { Textarea } from "../components/ui/textarea"
-import { Label } from "../components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Button } from "./ui/button"
+import { Input } from "./ui/input"
+import { Badge } from "./ui/badge"
+import { Textarea } from "./ui/textarea"
+import { Label } from "./ui/label"
 import { MapPin, Menu, X, User, Briefcase, GraduationCap, PenTool, FileText, Loader2, CheckCircle2 } from "lucide-react"
 
 // =================== TYPES ===================
