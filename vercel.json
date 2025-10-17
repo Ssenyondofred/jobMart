@@ -3,6 +3,6 @@
     { "src": "vite.config.js", "use": "@vercel/static-build" }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "/dist/$1" }
+   { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
